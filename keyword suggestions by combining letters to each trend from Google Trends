@@ -1,0 +1,246 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Copy of Copy of Google Trends Suggestions",
+      "provenance": [],
+      "history_visible": true,
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/mrohani/Keyword-Trends-Analyser/blob/main/keyword%20suggestions%20by%20combining%20letters%20to%20each%20trend%20from%20Google%20Trends\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "M_kT6Uker5hS",
+        "outputId": "4579637b-69ee-4585-8882-84374784ce81"
+      },
+      "source": [
+        "import requests\n",
+        "import pandas as pd\n",
+        "from time import sleep\n",
+        "from tqdm.notebook import tqdm\n",
+        "from random import randint\n",
+        "!pip install pytrends\n",
+        "from pytrends.request import TrendReq\n",
+        "from datetime import date"
+      ],
+      "execution_count": 44,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Requirement already satisfied: pytrends in /usr/local/lib/python3.7/dist-packages (4.7.3)\n",
+            "Requirement already satisfied: pandas>=0.25 in /usr/local/lib/python3.7/dist-packages (from pytrends) (1.1.5)\n",
+            "Requirement already satisfied: requests in /usr/local/lib/python3.7/dist-packages (from pytrends) (2.23.0)\n",
+            "Requirement already satisfied: lxml in /usr/local/lib/python3.7/dist-packages (from pytrends) (4.2.6)\n",
+            "Requirement already satisfied: python-dateutil>=2.7.3 in /usr/local/lib/python3.7/dist-packages (from pandas>=0.25->pytrends) (2.8.1)\n",
+            "Requirement already satisfied: pytz>=2017.2 in /usr/local/lib/python3.7/dist-packages (from pandas>=0.25->pytrends) (2018.9)\n",
+            "Requirement already satisfied: numpy>=1.15.4 in /usr/local/lib/python3.7/dist-packages (from pandas>=0.25->pytrends) (1.19.5)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.7/dist-packages (from requests->pytrends) (2020.12.5)\n",
+            "Requirement already satisfied: idna<3,>=2.5 in /usr/local/lib/python3.7/dist-packages (from requests->pytrends) (2.10)\n",
+            "Requirement already satisfied: urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1 in /usr/local/lib/python3.7/dist-packages (from requests->pytrends) (1.24.3)\n",
+            "Requirement already satisfied: chardet<4,>=3.0.2 in /usr/local/lib/python3.7/dist-packages (from requests->pytrends) (3.0.4)\n",
+            "Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.7/dist-packages (from python-dateutil>=2.7.3->pandas>=0.25->pytrends) (1.15.0)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "CyJjwEtXsdO3"
+      },
+      "source": [
+        "# Initiate PyTrends\n",
+        "pytrends = TrendReq()\n",
+        "\n",
+        "# Define paremeters to use in our script\n",
+        "\n",
+        "## Google Trends ##\n",
+        "\n",
+        "# Trends country, Country to use in Google Trends\n",
+        "# Not all the countries are supported, waiting for my country (Jordan) to be supported \n",
+        "# https://support.google.com/trends/answer/4355212?hl=en\n",
+        "trending_country = \"iran\"\n",
+        "\n",
+        "## Google Suggestions ##\n",
+        "\n",
+        "# Suggestions language, currenlty this script supports only Arabic (ar) and English (en) languages\n",
+        "language = \"fa\"\n",
+        "\n",
+        "# Letters to use in Google Suggestions, currently, you can use only Arabic and English letters\n",
+        "# Feel free to add your language\n",
+        "letters = {'ar':['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي'],\n",
+        "          'en':['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'],\n",
+        "           'fa':['الف','ب','پ','ت','ث','ج','چ','ح','خ','د','ذ','ر','ز','ژ','س','ش','ص','ط','ع','غ','ف','ق','ک','گ','ل','م','ن','و','ه','ی']\n",
+        "          }\n",
+        "\n",
+        "# Suggestions Country code, you can use any country code, like jo for Jordan.\n",
+        "# sa for Saudi Arabia, full list https://bit.ly/3bMiAHz\n",
+        "country = \"iran\"\n",
+        "\n",
+        "\n",
+        "# User Agent string to use in our requests, Google Chrome\n",
+        "ua = \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36\"\n",
+        "\n",
+        "# Delay in seconds between each request to avoid getting blocked by Google\n",
+        "delay = 1\n",
+        "\n",
+        "# Date to use in our final CSV file\n",
+        "output_date = date.today().strftime(\"%b-%d-%Y\").lower()\n",
+        "\n",
+        "# Output file name\n",
+        "output_file_name = f\"google-trends-suggestions_{output_date}_{trending_country}_{randint(1,9999)}.csv\"\n",
+        "\n",
+        "# Empty lists to use later\n",
+        "letters_list = []\n",
+        "original_keywords_list = []\n",
+        "word_count_list = []\n",
+        "suggested_list = []\n",
+        "country_list = []\n",
+        "trend_country = []"
+      ],
+      "execution_count": 45,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Dh_1J8l4sd_o"
+      },
+      "source": [
+        "def get_trends(trend_country):\n",
+        "    return pytrends.trending_searches(pn=trend_country)"
+      ],
+      "execution_count": 46,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "rHz8x0F4sgCi"
+      },
+      "source": [
+        "def generate_suggestions(trending_searches,suggestions_language,output_file_name,trending_country):\n",
+        "    i = 0\n",
+        "    for trend in tqdm(trending_searches[0]):\n",
+        "        # Replace the spaces from each keyword with \"+\"\n",
+        "        trend = trend.replace(\" \",\"+\")\n",
+        "        for letter in letters[suggestions_language]:\n",
+        "            # Generate the URL for Google Suggest Query\n",
+        "            url = f\"http://suggestqueries.google.com/complete/search?output=firefox&q={trend}+{letter}&hl={country}&gl={language}\"\n",
+        "            suggest_page = requests.get(url,headers = {\"User-Agent\":ua})\n",
+        "            # Check the response code\n",
+        "            if suggest_page.status_code == 200:\n",
+        "                suggest_list = suggest_page.json()\n",
+        "                for suggest in suggest_list[1]:\n",
+        "                    letters_list.append(letter)\n",
+        "                    original_keywords_list.append(trend.replace(\"+\",\" \"))\n",
+        "                    word_count_list.append(len(suggest.split(\" \")))\n",
+        "                    trend_country.append(trending_country.capitalize().replace(\"_\",\" \"))\n",
+        "                    suggested_list.append(suggest)\n",
+        "                    country_list.append(country)\n",
+        "            else:\n",
+        "                # Blocked from Google, try to increase the delay between the requests\n",
+        "                print(suggest_page.status_code)\n",
+        "            sleep(delay)\n",
+        "    \n",
+        "        # Dictionary for the data frame\n",
+        "        suggest_dataframe_list = {\"Trend\":original_keywords_list,\n",
+        "                             \"Suggested Keywords\":suggested_list,\n",
+        "                             \"Word Count\":word_count_list,\n",
+        "                            \"Trend Country\":trend_country,\n",
+        "                             \"Letter\":letters_list,\n",
+        "                             \"Suggestion Country\":country_list\n",
+        "        }\n",
+        "        \n",
+        "        # Generate Dataframe for each Trend keyword to avoid loosing any results\n",
+        "        # incase something wrong happend\n",
+        "        generate_df(suggest_dataframe_list,output_file_name)\n",
+        "        \n",
+        "        # Reset the dictionary values\n",
+        "        suggest_dataframe_list = {}"
+      ],
+      "execution_count": 47,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "uY68Y08VsiCu"
+      },
+      "source": [
+        "def generate_df(suggest_dataframe_list,output_file_name):\n",
+        "    # Convert the output to Pandas Dataframe\n",
+        "    suggest_dataframe = pd.DataFrame(suggest_dataframe_list,columns=[\"Trend\",\"Suggested Keywords\",\"Word Count\",\"Trend Country\",\"Letter\",\"Suggestion Country\"])\n",
+        "\n",
+        "    # Save the file in a CSV format\n",
+        "    suggest_dataframe.to_csv(output_file_name) "
+      ],
+      "execution_count": 48,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 375
+        },
+        "id": "8HjAC7nisj4q",
+        "outputId": "012335ff-b970-4173-b408-77ec526f94ea"
+      },
+      "source": [
+        "# Get trends for a certain country\n",
+        "trending_searches = get_trends(trending_country)\n",
+        "\n",
+        "# Generate Suggestions from the trends\n",
+        "generate_suggestions(trending_searches,language,output_file_name,trending_country)\n",
+        "\n",
+        "print(f\"Done, check file {output_file_name}\")\n",
+        "\n",
+        "# Display sample of the results\n",
+        "display(pd.read_csv(output_file_name, encoding = \"utf-8\"))"
+      ],
+      "execution_count": 49,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "KeyError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mKeyError\u001b[0m                                  Traceback (most recent call last)",
+            "\u001b[0;32m<ipython-input-49-8619598d29d2>\u001b[0m in \u001b[0;36m<module>\u001b[0;34m()\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0;31m# Get trends for a certain country\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m \u001b[0mtrending_searches\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mget_trends\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mtrending_country\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m      3\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      4\u001b[0m \u001b[0;31m# Generate Suggestions from the trends\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m      5\u001b[0m \u001b[0mgenerate_suggestions\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mtrending_searches\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0mlanguage\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0moutput_file_name\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0mtrending_country\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m<ipython-input-46-f7ae37a326d1>\u001b[0m in \u001b[0;36mget_trends\u001b[0;34m(trend_country)\u001b[0m\n\u001b[1;32m      1\u001b[0m \u001b[0;32mdef\u001b[0m \u001b[0mget_trends\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mtrend_country\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m----> 2\u001b[0;31m     \u001b[0;32mreturn\u001b[0m \u001b[0mpytrends\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mtrending_searches\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mpn\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mtrend_country\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m",
+            "\u001b[0;32m/usr/local/lib/python3.7/dist-packages/pytrends/request.py\u001b[0m in \u001b[0;36mtrending_searches\u001b[0;34m(self, pn)\u001b[0m\n\u001b[1;32m    405\u001b[0m             \u001b[0mmethod\u001b[0m\u001b[0;34m=\u001b[0m\u001b[0mTrendReq\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mGET_METHOD\u001b[0m\u001b[0;34m,\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    406\u001b[0m             \u001b[0;34m**\u001b[0m\u001b[0mself\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mrequests_args\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 407\u001b[0;31m         )[pn]\n\u001b[0m\u001b[1;32m    408\u001b[0m         \u001b[0mresult_df\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mpd\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mDataFrame\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mreq_json\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    409\u001b[0m         \u001b[0;32mreturn\u001b[0m \u001b[0mresult_df\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mKeyError\u001b[0m: 'iran'"
+          ]
+        }
+      ]
+    }
+  ]
+}
